@@ -46,7 +46,8 @@ func convertMap(err error, pattern string) map[string]string {
 // FormatGRpcError 格式化
 func FormatGRpcError(err error) (berr *BusinessError) {
 	if err == nil {
-		panic("error is null.")
+		berr = nil
+		return
 	}
 	errMap := convertMap(err, grpcErrPattern)
 	_, rpcCodeOk := errMap["rpc_code"]
