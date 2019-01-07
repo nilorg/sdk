@@ -18,7 +18,7 @@ type BusinessError struct {
 }
 
 // Error
-func (err *BusinessError) Error() string {
+func (err BusinessError) Error() string {
 	return fmt.Sprintf("%d-%s", err.Code, err.Msg)
 }
 
