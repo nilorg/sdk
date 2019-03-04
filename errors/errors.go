@@ -18,12 +18,12 @@ type BusinessError struct {
 }
 
 // Error
-func (err BusinessError) Error() string {
+func (err *BusinessError) Error() string {
 	return fmt.Sprintf("%d-%s", err.Code, err.Msg)
 }
 
 // New ...
-func New(code int, msg string) *BusinessError {
+func New(code int, msg string) error {
 	return &BusinessError{
 		Code: code,
 		Msg:  msg,
@@ -44,7 +44,7 @@ func convertMap(err error, pattern string) map[string]string {
 }
 
 // FormatGRpcError 格式化
-func FormatGRpcError(err error) (berr *BusinessError) {
+func FormatGRpcError(err error) (berr error) {
 	if err == nil {
 		berr = nil
 		return
