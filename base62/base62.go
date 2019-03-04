@@ -17,22 +17,28 @@ func Encode(number int) string {
 	if number == 0 {
 		return "0"
 	}
-	result := make([]byte, 0)
+	resultTmp := make([]string, 0)
 	for number > 0 {
 		round := number / codeLenth
 		remain := number % codeLenth
-		result = append(result, code62[remain])
+		resultTmp = append(resultTmp, string(code62[remain]))
 		number = round
 	}
-	return string(result)
+	result := ""
+	for i := len(resultTmp) - 1; i >= 0; i-- {
+		result += resultTmp[i]
+	}
+	return result
 }
 
 // Decode 解码字符串为整数
 func Decode(str string) int {
 	str = strings.TrimSpace(str)
+	strLen := len(str)
 	result := 0
 	for index, char := range []byte(str) {
-		result += edoc[string(char)] * int(math.Pow(codeLenth, float64(index)))
+		power := strLen - (index + 1)
+		result += edoc[string(char)] * int(math.Pow(codeLenth, float64(power)))
 	}
 	return result
 }
