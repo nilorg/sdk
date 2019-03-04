@@ -8,6 +8,6 @@ func TestEncode(t *testing.T) {
 }
 
 func TestDecode(t *testing.T) {
-	str := Decode("C1")
+	str := Decode("1C")
 	t.Log(str)
 }
