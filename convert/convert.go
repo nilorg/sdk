@@ -15,6 +15,29 @@ func ToString(value interface{}) string {
 	return fmt.Sprint(value)
 }
 
+// ToBool 转换成Bool
+func ToBool(i interface{}) bool {
+	switch b := i.(type) {
+	case bool:
+		return b
+	case nil:
+		return false
+	case int:
+		if i.(int) != 0 {
+			return true
+		}
+		return false
+	case string:
+		v, err := strconv.ParseBool(ToString(i))
+		if err != nil {
+			return false
+		}
+		return v
+	default:
+		return false
+	}
+}
+
 // ToInt 转换成int
 func ToInt(value interface{}) int {
 	return int(ToInt64(value))
