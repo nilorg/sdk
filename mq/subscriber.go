@@ -3,7 +3,7 @@ package mq
 import "context"
 
 // SubscribeHandler ...
-type SubscribeHandler func(ctx context.Context, msg interface{})
+type SubscribeHandler func(ctx context.Context, data []byte)
 
 // Subscriber ...
 type Subscriber interface {
