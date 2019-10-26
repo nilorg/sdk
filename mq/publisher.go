@@ -4,5 +4,5 @@ import "context"
 
 // Publisher ...
 type Publisher interface {
-	Publish(ctx context.Context, msg interface{}) error
+	Publish(ctx context.Context, subj string, msg interface{}) error
 }
