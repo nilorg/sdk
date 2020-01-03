@@ -30,6 +30,14 @@ func New(code int, msg string) error {
 	}
 }
 
+// NewBusinessError ...
+func NewBusinessError(code int, msg string) *BusinessError {
+	return &BusinessError{
+		Code: code,
+		Msg:  msg,
+	}
+}
+
 // convertMap 转Map
 func convertMap(err error, pattern string) map[string]string {
 	r := regexp.MustCompile(pattern)
