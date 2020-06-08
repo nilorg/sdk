@@ -27,6 +27,16 @@ func NewDefaultStorage() *DefaultStorage {
 // Upload 上传
 func (ds *DefaultStorage) Upload(read io.Reader, filename string) (fullPath string, err error) {
 	fullPath = filepath.Join(ds.BasePath, filename)
+	dir := filepath.Dir(fullPath)
+	_, dirErr := os.Stat(dir)
+	if dirErr != nil {
+		if os.IsNotExist(dirErr) {
+			os.MkdirAll(dir, os.ModePerm)
+		} else {
+			err = dirErr
+			return
+		}
+	}
 	dst, err := os.Create(fullPath)
 	if err != nil {
 		return
