@@ -8,7 +8,7 @@ import (
 
 // Storager 存储
 type Storager interface {
-	Upload(read io.Reader, filename string) (err error)
+	Upload(read io.Reader, filename string) (fullPath string, err error)
 	Download(write io.Writer, filename string) (err error)
 }
 
