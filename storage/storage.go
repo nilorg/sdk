@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"errors"
 	"io"
 	"os"
@@ -9,8 +10,8 @@ import (
 
 // Storager 存储
 type Storager interface {
-	Upload(read io.Reader, parameters ...interface{}) (fullPath string, err error)
-	Download(write io.Writer, parameters ...interface{}) (err error)
+	Upload(ctx context.Context, read io.Reader, parameters ...interface{}) (fullPath string, err error)
+	Download(ctx context.Context, write io.Writer, parameters ...interface{}) (err error)
 }
 
 // DefaultStorage 默认存储
@@ -40,7 +41,7 @@ func (ds *DefaultStorage) filename(parameters ...interface{}) (filename string, 
 }
 
 // Upload 上传
-func (ds *DefaultStorage) Upload(read io.Reader, parameters ...interface{}) (fullPath string, err error) {
+func (ds *DefaultStorage) Upload(ctx context.Context, read io.Reader, parameters ...interface{}) (fullPath string, err error) {
 	var (
 		filename string
 	)
@@ -71,7 +72,7 @@ func (ds *DefaultStorage) Upload(read io.Reader, parameters ...interface{}) (ful
 }
 
 // Download 下载
-func (ds *DefaultStorage) Download(dist io.Writer, parameters ...interface{}) (err error) {
+func (ds *DefaultStorage) Download(ctx context.Context, dist io.Writer, parameters ...interface{}) (err error) {
 	var (
 		filename string
 	)
