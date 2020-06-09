@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -8,8 +9,8 @@ import (
 
 // Storager 存储
 type Storager interface {
-	Upload(read io.Reader, filename string) (fullPath string, err error)
-	Download(write io.Writer, filename string) (err error)
+	Upload(read io.Reader, parameters ...interface{}) (fullPath string, err error)
+	Download(write io.Writer, parameters ...interface{}) (err error)
 }
 
 // DefaultStorage 默认存储
@@ -24,8 +25,29 @@ func NewDefaultStorage() *DefaultStorage {
 	}
 }
 
+func (ds *DefaultStorage) filename(parameters ...interface{}) (filename string, err error) {
+	if len(parameters) == 0 {
+		err = errors.New("Please enter filename")
+		return
+	}
+	switch parameters[0].(type) {
+	case string:
+		filename = parameters[0].(string)
+	default:
+		err = errors.New("filename parameter type error")
+	}
+	return
+}
+
 // Upload 上传
-func (ds *DefaultStorage) Upload(read io.Reader, filename string) (fullPath string, err error) {
+func (ds *DefaultStorage) Upload(read io.Reader, parameters ...interface{}) (fullPath string, err error) {
+	var (
+		filename string
+	)
+	filename, err = ds.filename(parameters...)
+	if err != nil {
+		return
+	}
 	fullPath = filepath.Join(ds.BasePath, filename)
 	dir := filepath.Dir(fullPath)
 	_, dirErr := os.Stat(dir)
@@ -49,7 +71,14 @@ func (ds *DefaultStorage) Upload(read io.Reader, filename string) (fullPath stri
 }
 
 // Download 下载
-func (ds *DefaultStorage) Download(dist io.Writer, filename string) (err error) {
+func (ds *DefaultStorage) Download(dist io.Writer, parameters ...interface{}) (err error) {
+	var (
+		filename string
+	)
+	filename, err = ds.filename(parameters...)
+	if err != nil {
+		return
+	}
 	fullPath := filepath.Join(ds.BasePath, filename)
 	file, err := os.Open(fullPath)
 	if err != nil {
