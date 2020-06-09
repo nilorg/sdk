@@ -12,6 +12,7 @@ import (
 type Storager interface {
 	Upload(ctx context.Context, read io.Reader, parameters ...interface{}) (fullPath string, err error)
 	Download(ctx context.Context, write io.Writer, parameters ...interface{}) (err error)
+	Remove(ctx context.Context, fullPath string, parameters ...interface{}) (err error)
 }
 
 // DefaultStorage 默认存储
@@ -41,7 +42,7 @@ func (ds *DefaultStorage) filename(parameters ...interface{}) (filename string, 
 }
 
 // Upload 上传
-func (ds *DefaultStorage) Upload(ctx context.Context, read io.Reader, parameters ...interface{}) (fullPath string, err error) {
+func (ds *DefaultStorage) Upload(_ context.Context, read io.Reader, parameters ...interface{}) (fullPath string, err error) {
 	var (
 		filename string
 	)
@@ -72,7 +73,7 @@ func (ds *DefaultStorage) Upload(ctx context.Context, read io.Reader, parameters
 }
 
 // Download 下载
-func (ds *DefaultStorage) Download(ctx context.Context, dist io.Writer, parameters ...interface{}) (err error) {
+func (ds *DefaultStorage) Download(_ context.Context, dist io.Writer, parameters ...interface{}) (err error) {
 	var (
 		filename string
 	)
@@ -85,5 +86,11 @@ func (ds *DefaultStorage) Download(ctx context.Context, dist io.Writer, paramete
 	if err != nil {
 	}
 	_, err = io.Copy(dist, file)
+	return
+}
+
+// Remove 删除
+func (ds *DefaultStorage) Remove(_ context.Context, fullPath string, parameters ...interface{}) (err error) {
+	err = os.Remove(fullPath)
 	return
 }
