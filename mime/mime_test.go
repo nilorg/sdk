@@ -9,4 +9,6 @@ func TestLookup(t *testing.T) {
 	t.Log(mimeType, exist)
 	mimeType, exist = Lookup("jpg")
 	t.Log(mimeType, exist)
+	mimeType, exist = Lookup("Jpg")
+	t.Log(mimeType, exist)
 }

@@ -1,5 +1,7 @@
 package mime
 
+import "strings"
+
 var (
 	// ExtensionMIMEType ...
 	ExtensionMIMEType = map[string]string{
@@ -84,7 +86,7 @@ func formatExtension(extension string) string {
 	if extension[0:1] != "." {
 		extension = "." + extension
 	}
-	return extension
+	return strings.ToLower(extension)
 }
 
 // Set 设置
