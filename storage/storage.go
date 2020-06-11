@@ -12,11 +12,21 @@ type Uploader interface {
 	Upload(ctx context.Context, read io.Reader, filename string) (fullName string, err error)
 }
 
+// Downloader 下载
+type Downloader interface {
+	Download(ctx context.Context, write io.Writer, fullName string) (results interface{}, err error)
+}
+
+// Remover 删除
+type Remover interface {
+	Remove(ctx context.Context, filename string) (err error)
+}
+
 // Storager 存储
 type Storager interface {
 	Uploader
-	Download(ctx context.Context, write io.Writer, filename string) (results interface{}, err error)
-	Remove(ctx context.Context, filename string) (err error)
+	Downloader
+	Remover
 }
 
 // DefaultStorage 默认存储
