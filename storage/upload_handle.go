@@ -4,6 +4,7 @@ import (
 	"context"
 	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"os"
 )
 
@@ -43,6 +44,8 @@ type UploadFileInfoer interface {
 	Filename() string
 	// Size 文件大小
 	Size() int64
+	// Header 获取MIMEHeader
+	Header() textproto.MIMEHeader
 }
 
 // uploadFileInfo 上传file信息
@@ -50,6 +53,7 @@ type uploadFileInfo struct {
 	fullName string
 	filename string
 	size     int64
+	header   textproto.MIMEHeader
 }
 
 func (ufi *uploadFileInfo) FullName() string {
@@ -62,6 +66,10 @@ func (ufi *uploadFileInfo) Filename() string {
 
 func (ufi *uploadFileInfo) Size() int64 {
 	return ufi.size
+}
+
+func (ufi *uploadFileInfo) Header() textproto.MIMEHeader {
+	return ufi.header
 }
 
 // UploadHandle 上传处理
@@ -97,6 +105,7 @@ func UploadHandle(ctx context.Context, r *http.Request, us UploadStorager, name 
 			fullName: fullName,
 			filename: mfh.Filename,
 			size:     mfh.Size,
+			header:   mfh.Header,
 		})
 	}
 	return
