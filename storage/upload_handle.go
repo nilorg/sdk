@@ -75,7 +75,7 @@ func UploadHandle(ctx context.Context, r *http.Request, us UploadStorager, name 
 			return
 		}
 		var fullName string
-		fullName, err = us.Upload(ctx, file, file)
+		fullName, err = us.Upload(ctx, file, mfh.Filename)
 		file.Close()
 		if err != nil {
 			return
