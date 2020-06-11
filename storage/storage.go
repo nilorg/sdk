@@ -16,7 +16,7 @@ type Uploader interface {
 type Storager interface {
 	Uploader
 	Download(ctx context.Context, write io.Writer, filename string) (results interface{}, err error)
-	Remove(ctx context.Context, fullName string, filename string) (err error)
+	Remove(ctx context.Context, filename string) (err error)
 }
 
 // DefaultStorage 默认存储
@@ -66,7 +66,8 @@ func (ds *DefaultStorage) Download(_ context.Context, dist io.Writer, filename s
 }
 
 // Remove 删除
-func (ds *DefaultStorage) Remove(_ context.Context, fullName string, filename string) (err error) {
+func (ds *DefaultStorage) Remove(_ context.Context, filename string) (err error) {
+	fullName := filepath.Join(ds.BasePath, filename)
 	err = os.Remove(fullName)
 	return
 }
