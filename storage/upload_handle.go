@@ -34,31 +34,38 @@ func NewDefaultUploadStorage() *DefaultUploadStorage {
 	}
 }
 
-// UploadFileInfo 上传file信息
-type UploadFileInfo struct {
+// UploadFileInfoer 上传file信息接口
+type UploadFileInfoer interface {
+	// FullName 完整的文件名
+	// 包含路径
+	FullName() string
+	// Filename 文件名
+	Filename() string
+	// Size 文件大小
+	Size() int64
+}
+
+// uploadFileInfo 上传file信息
+type uploadFileInfo struct {
 	fullName string
 	filename string
 	size     int64
 }
 
-// FullName 完整的文件名
-// 包含路径
-func (ufi *UploadFileInfo) FullName() string {
+func (ufi *uploadFileInfo) FullName() string {
 	return ufi.fullName
 }
 
-// Filename 文件名
-func (ufi *UploadFileInfo) Filename() string {
+func (ufi *uploadFileInfo) Filename() string {
 	return ufi.filename
 }
 
-// Size 文件大小
-func (ufi *UploadFileInfo) Size() int64 {
+func (ufi *uploadFileInfo) Size() int64 {
 	return ufi.size
 }
 
 // UploadHandle 上传处理
-func UploadHandle(ctx context.Context, r *http.Request, us UploadStorager, name string) (infos []*UploadFileInfo, err error) {
+func UploadHandle(ctx context.Context, r *http.Request, us UploadStorager, name string) (infos []UploadFileInfoer, err error) {
 	if us == nil {
 		us = NewDefaultUploadStorage()
 	}
@@ -86,7 +93,7 @@ func UploadHandle(ctx context.Context, r *http.Request, us UploadStorager, name 
 		// if err != nil {
 		// 	return
 		// }
-		infos = append(infos, &UploadFileInfo{
+		infos = append(infos, &uploadFileInfo{
 			fullName: fullName,
 			filename: mfh.Filename,
 			size:     mfh.Size,
