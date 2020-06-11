@@ -80,15 +80,16 @@ func UploadHandle(ctx context.Context, r *http.Request, us UploadStorager, name 
 		if err != nil {
 			return
 		}
-		var size int64
-		size, err = GetMultipartFileSize(file)
-		if err != nil {
-			return
-		}
+		// https://github.com/golang/go/issues/19501
+		// var size int64
+		// size, err = GetMultipartFileSize(file)
+		// if err != nil {
+		// 	return
+		// }
 		infos = append(infos, &UploadFileInfo{
 			fullName: fullName,
 			filename: mfh.Filename,
-			size:     size,
+			size:     mfh.Size,
 		})
 	}
 	return
@@ -105,6 +106,7 @@ type stater interface {
 }
 
 // GetMultipartFileSize 获取上传文件大小
+// 相关问题：https://github.com/golang/go/issues/19501
 func GetMultipartFileSize(file multipart.File) (size int64, err error) {
 	if sizeImpl, ok := file.(sizer); ok {
 		size = sizeImpl.Size()
