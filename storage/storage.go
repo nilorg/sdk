@@ -5,6 +5,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/nilorg/sdk/mime"
 )
 
 // Uploader 上传
@@ -14,7 +16,7 @@ type Uploader interface {
 
 // Downloader 下载
 type Downloader interface {
-	Download(ctx context.Context, write io.Writer, fullName string) (results interface{}, err error)
+	Download(ctx context.Context, write io.Writer, filename string) (info DownloadFileInfoer, err error)
 }
 
 // Remover 删除
@@ -66,12 +68,27 @@ func (ds *DefaultStorage) Upload(_ context.Context, read io.Reader, filename str
 }
 
 // Download 下载
-func (ds *DefaultStorage) Download(_ context.Context, dist io.Writer, filename string) (results interface{}, err error) {
+func (ds *DefaultStorage) Download(_ context.Context, dist io.Writer, filename string) (info DownloadFileInfoer, err error) {
 	fullName := filepath.Join(ds.BasePath, filename)
 	file, err := os.Open(fullName)
 	if err != nil {
+		return
 	}
-	results, err = io.Copy(dist, file)
+	var written int64
+	written, err = io.Copy(dist, file)
+	if err != err {
+		return
+	}
+	md := Metadata{}
+	extFilename := filepath.Ext(filename)
+	if mimeType, exist := mime.Lookup(extFilename); exist {
+		md.Set("Content-Type", mimeType)
+	}
+	info = &downloadFileInfo{
+		size:     written,
+		metadata: md,
+		filename: extFilename,
+	}
 	return
 }
 
@@ -80,4 +97,32 @@ func (ds *DefaultStorage) Remove(_ context.Context, filename string) (err error)
 	fullName := filepath.Join(ds.BasePath, filename)
 	err = os.Remove(fullName)
 	return
+}
+
+// DownloadFileInfoer 下载file信息接口
+type DownloadFileInfoer interface {
+	// Size 文件大小
+	Size() int64
+	// Filename 文件名
+	Filename() string
+	// Metadata 获取元数据
+	Metadata() Metadata
+}
+
+type downloadFileInfo struct {
+	size     int64
+	filename string
+	metadata Metadata
+}
+
+func (dfi *downloadFileInfo) Size() int64 {
+	return dfi.size
+}
+
+func (dfi *downloadFileInfo) Filename() string {
+	return dfi.filename
+}
+
+func (dfi *downloadFileInfo) Metadata() Metadata {
+	return dfi.metadata
 }

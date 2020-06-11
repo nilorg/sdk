@@ -11,7 +11,6 @@ import (
 // DownloadStorager 下载接口
 type DownloadStorager interface {
 	Downloader
-	FormatWriteFilename(filename interface{}) string
 	DispositionType() string
 }
 
@@ -19,11 +18,6 @@ type DownloadStorager interface {
 type DefaultDownloadStorage struct {
 	*DefaultStorage
 	dispositionType string
-}
-
-// FormatWriteFilename 格式化写入文件名
-func (*DefaultDownloadStorage) FormatWriteFilename(filename interface{}) string {
-	return filename.(string)
 }
 
 // DispositionType Disposition Type
@@ -40,24 +34,32 @@ func NewDefaultDownloadStorage(dispositionType string) *DefaultDownloadStorage {
 }
 
 // DownloadHandle 下载处理
-func DownloadHandle(ctx context.Context, resp http.ResponseWriter, ds DownloadStorager, fullName string) (err error) {
+func DownloadHandle(ctx context.Context, resp http.ResponseWriter, ds DownloadStorager, filename string) (err error) {
 	if ds == nil {
 		ds = NewDefaultDownloadStorage("attachment")
 	}
-	var results interface{}
-	results, err = ds.Download(ctx, resp, fullName)
+	var dfInfo DownloadFileInfoer
+	dfInfo, err = ds.Download(ctx, resp, filename)
 	if err != nil {
 		return
 	}
+
+	md := dfInfo.Metadata()
+	if md != nil {
+		contextType := md.Get("Content-Type")
+		if contextType != "" {
+			resp.Header().Add("Content-Type", contextType)
+			return
+		}
+	}
+	if mimeType, exist := mime.Lookup(dfInfo.Filename()); exist {
+		resp.Header().Add("Content-Type", mimeType)
+	}
+
 	dispositionType := ds.DispositionType()
 	if dispositionType == "" || (dispositionType != "inline" && dispositionType != "attachment") {
 		dispositionType = "attachment"
 	}
-	writeFilename := ds.FormatWriteFilename(results)
-	resp.Header().Add("Content-Disposition", fmt.Sprintf("%s; filename=\"%s\"", dispositionType, writeFilename))
-
-	if mimeType, exist := mime.Lookup(writeFilename); exist {
-		resp.Header().Add("Content-Type", mimeType)
-	}
+	resp.Header().Add("Content-Disposition", fmt.Sprintf("%s; filename=\"%s\"", dispositionType, dfInfo.Filename()))
 	return
 }
