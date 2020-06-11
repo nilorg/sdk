@@ -8,11 +8,16 @@ import (
 	"path/filepath"
 )
 
+// Uploader 上传
+type Uploader interface {
+	Upload(ctx context.Context, read io.Reader, parameters ...interface{}) (fullName string, err error)
+}
+
 // Storager 存储
 type Storager interface {
-	Upload(ctx context.Context, read io.Reader, parameters ...interface{}) (fullPath string, err error)
+	Uploader
 	Download(ctx context.Context, write io.Writer, parameters ...interface{}) (results interface{}, err error)
-	Remove(ctx context.Context, fullPath string, parameters ...interface{}) (err error)
+	Remove(ctx context.Context, fullName string, parameters ...interface{}) (err error)
 }
 
 // DefaultStorage 默认存储
@@ -42,7 +47,7 @@ func (ds *DefaultStorage) filename(parameters ...interface{}) (filename string, 
 }
 
 // Upload 上传
-func (ds *DefaultStorage) Upload(_ context.Context, read io.Reader, parameters ...interface{}) (fullPath string, err error) {
+func (ds *DefaultStorage) Upload(_ context.Context, read io.Reader, parameters ...interface{}) (fullName string, err error) {
 	var (
 		filename string
 	)
@@ -50,8 +55,8 @@ func (ds *DefaultStorage) Upload(_ context.Context, read io.Reader, parameters .
 	if err != nil {
 		return
 	}
-	fullPath = filepath.Join(ds.BasePath, filename)
-	dir := filepath.Dir(fullPath)
+	fullName = filepath.Join(ds.BasePath, filename)
+	dir := filepath.Dir(fullName)
 	_, dirErr := os.Stat(dir)
 	if dirErr != nil {
 		if os.IsNotExist(dirErr) {
@@ -61,7 +66,7 @@ func (ds *DefaultStorage) Upload(_ context.Context, read io.Reader, parameters .
 			return
 		}
 	}
-	dst, err := os.Create(fullPath)
+	dst, err := os.Create(fullName)
 	if err != nil {
 		return
 	}
@@ -81,8 +86,8 @@ func (ds *DefaultStorage) Download(_ context.Context, dist io.Writer, parameters
 	if err != nil {
 		return
 	}
-	fullPath := filepath.Join(ds.BasePath, filename)
-	file, err := os.Open(fullPath)
+	fullName := filepath.Join(ds.BasePath, filename)
+	file, err := os.Open(fullName)
 	if err != nil {
 	}
 	results, err = io.Copy(dist, file)
@@ -90,7 +95,7 @@ func (ds *DefaultStorage) Download(_ context.Context, dist io.Writer, parameters
 }
 
 // Remove 删除
-func (ds *DefaultStorage) Remove(_ context.Context, fullPath string, parameters ...interface{}) (err error) {
-	err = os.Remove(fullPath)
+func (ds *DefaultStorage) Remove(_ context.Context, fullName string, parameters ...interface{}) (err error) {
+	err = os.Remove(fullName)
 	return
 }
