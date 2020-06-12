@@ -64,6 +64,6 @@ func DownloadHandle(ctx context.Context, resp http.ResponseWriter, ds DownloadSt
 	if err != nil {
 		return
 	}
-	resp.WriteHeader(400)
+	resp.WriteHeader(http.StatusOK)
 	return
 }
