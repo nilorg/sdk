@@ -68,7 +68,7 @@ func (ds *DefaultStorage) Upload(_ context.Context, read io.Reader, filename str
 }
 
 // Download 下载
-func (ds *DefaultStorage) Download(_ context.Context, dist io.Writer, filename string) (info DownloadFileInfoer, err error) {
+func (ds *DefaultStorage) Download(ctx context.Context, dist io.Writer, filename string) (info DownloadFileInfoer, err error) {
 	fullName := filepath.Join(ds.BasePath, filename)
 	file, err := os.Open(fullName)
 	if err != nil {
@@ -80,14 +80,21 @@ func (ds *DefaultStorage) Download(_ context.Context, dist io.Writer, filename s
 		return
 	}
 	md := Metadata{}
-	extFilename := filepath.Ext(filename)
-	if mimeType, exist := mime.Lookup(extFilename); exist {
+	if mimeType, exist := mime.Lookup(filepath.Ext(filename)); exist {
 		md.Set("Content-Type", mimeType)
 	}
+	var (
+		downloadFilename      string
+		downloadFilenameExist bool
+	)
+	if downloadFilename, downloadFilenameExist = FromDownloadFilenameContext(ctx); !downloadFilenameExist {
+		downloadFilename = filepath.Base(filename)
+	}
+
 	info = &downloadFileInfo{
 		size:     written,
 		metadata: md,
-		filename: extFilename,
+		filename: downloadFilename,
 	}
 	return
 }
