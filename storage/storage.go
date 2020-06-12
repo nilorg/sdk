@@ -74,11 +74,7 @@ func (ds *DefaultStorage) Download(ctx context.Context, dist io.Writer, filename
 	if err != nil {
 		return
 	}
-	var written int64
-	written, err = io.Copy(dist, file)
-	if err != err {
-		return
-	}
+
 	md := Metadata{}
 	if mimeType, exist := mime.Lookup(filepath.Ext(filename)); exist {
 		md.Set("Content-Type", mimeType)
@@ -90,11 +86,22 @@ func (ds *DefaultStorage) Download(ctx context.Context, dist io.Writer, filename
 	if downloadFilename, downloadFilenameExist = FromDownloadFilenameContext(ctx); !downloadFilenameExist {
 		downloadFilename = filepath.Base(filename)
 	}
-
+	var fileInfo os.FileInfo
+	fileInfo, err = file.Stat()
+	if err != nil {
+		return
+	}
 	info = &downloadFileInfo{
-		size:     written,
+		size:     fileInfo.Size(),
 		metadata: md,
 		filename: downloadFilename,
+	}
+	if downloadBefore, downloadBeforeExist := FromDownloadBeforeContext(ctx); downloadBeforeExist {
+		downloadBefore(info)
+	}
+	_, err = io.Copy(dist, file)
+	if err != nil {
+		info = nil
 	}
 	return
 }

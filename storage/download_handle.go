@@ -38,28 +38,32 @@ func DownloadHandle(ctx context.Context, resp http.ResponseWriter, ds DownloadSt
 	if ds == nil {
 		ds = NewDefaultDownloadStorage("attachment")
 	}
-	var dfInfo DownloadFileInfoer
-	dfInfo, err = ds.Download(ctx, resp, filename)
+
+	if _, ok := FromDownloadBeforeContext(ctx); !ok {
+		ctx = NewDownloadBeforeContext(ctx, func(info DownloadFileInfoer) {
+			md := info.Metadata()
+			wr := false
+			if md != nil {
+				contextType := md.Get("Content-Type")
+				if contextType != "" {
+					resp.Header().Set("Content-Type", contextType)
+					wr = true
+				}
+			}
+			if mimeType, exist := mime.Lookup(info.Filename()); !wr && exist {
+				resp.Header().Set("Content-Type", mimeType)
+			}
+			dispositionType := ds.DispositionType()
+			if dispositionType == "" || (dispositionType != "inline" && dispositionType != "attachment") {
+				dispositionType = "attachment"
+			}
+			resp.Header().Set("Content-Disposition", fmt.Sprintf("%s; filename=\"%s\"", dispositionType, info.Filename()))
+		})
+	}
+	_, err = ds.Download(ctx, resp, filename)
 	if err != nil {
 		return
 	}
-
-	md := dfInfo.Metadata()
-	if md != nil {
-		contextType := md.Get("Content-Type")
-		if contextType != "" {
-			resp.Header().Add("Content-Type", contextType)
-			return
-		}
-	}
-	if mimeType, exist := mime.Lookup(dfInfo.Filename()); exist {
-		resp.Header().Add("Content-Type", mimeType)
-	}
-
-	dispositionType := ds.DispositionType()
-	if dispositionType == "" || (dispositionType != "inline" && dispositionType != "attachment") {
-		dispositionType = "attachment"
-	}
-	resp.Header().Add("Content-Disposition", fmt.Sprintf("%s; filename=\"%s\"", dispositionType, dfInfo.Filename()))
+	resp.WriteHeader(400)
 	return
 }
