@@ -10,6 +10,10 @@ type Logger interface {
 	Infof(format string, args ...interface{})
 	// Infoln 消息
 	Infoln(args ...interface{})
+	// Warnf 警告
+	Warnf(format string, args ...interface{})
+	// Warnln 警告
+	Warnln(args ...interface{})
 	// Warningf 警告
 	Warningf(format string, args ...interface{})
 	// Warningln 警告
