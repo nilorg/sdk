@@ -50,20 +50,21 @@ func (ds *DefaultStorage) Upload(_ context.Context, read io.Reader, filename str
 	_, dirErr := os.Stat(dir)
 	if dirErr != nil {
 		if os.IsNotExist(dirErr) {
-			os.MkdirAll(dir, os.ModePerm)
+			err = os.MkdirAll(dir, os.ModePerm)
+			if err != nil {
+				return
+			}
 		} else {
 			err = dirErr
 			return
 		}
 	}
-	dst, err := os.Create(fullName)
+	var dst *os.File
+	dst, err = os.Create(fullName)
 	if err != nil {
 		return
 	}
 	_, err = io.Copy(dst, read)
-	if err != nil {
-		return
-	}
 	return
 }
 
