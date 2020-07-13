@@ -44,7 +44,10 @@ func NewDefaultStorage() *DefaultStorage {
 }
 
 // Upload 上传
-func (ds *DefaultStorage) Upload(_ context.Context, read io.Reader, filename string) (fullName string, err error) {
+func (ds *DefaultStorage) Upload(ctx context.Context, read io.Reader, filename string) (fullName string, err error) {
+	if rename, ok := FromRenameContext(ctx); ok {
+		filename = rename(filename)
+	}
 	fullName = filepath.Join(ds.BasePath, filename)
 	dir := filepath.Dir(fullName)
 	_, dirErr := os.Stat(dir)

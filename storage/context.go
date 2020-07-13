@@ -32,3 +32,19 @@ func FromDownloadBeforeContext(ctx context.Context) (f DownloadBefore, ok bool) 
 	f, ok = ctx.Value(downloadBeforeKey{}).(DownloadBefore)
 	return
 }
+
+type renameKey struct{}
+
+// Rename 重命名
+type Rename func(filename string) string
+
+// NewRenameContext ...
+func NewRenameContext(ctx context.Context, f Rename) context.Context {
+	return context.WithValue(ctx, renameKey{}, f)
+}
+
+// FromRenameContext ...
+func FromRenameContext(ctx context.Context) (f Rename, ok bool) {
+	f, ok = ctx.Value(renameKey{}).(Rename)
+	return
+}
