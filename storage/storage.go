@@ -62,12 +62,13 @@ func (ds *DefaultStorage) Upload(ctx context.Context, read io.Reader, filename s
 			return
 		}
 	}
-	var dst *os.File
-	dst, err = os.Create(fullName)
+	var dist *os.File
+	dist, err = os.Create(fullName)
 	if err != nil {
 		return
 	}
-	_, err = io.Copy(dst, read)
+	defer dist.Close()
+	_, err = io.Copy(dist, read)
 	return
 }
 
@@ -78,6 +79,7 @@ func (ds *DefaultStorage) Download(ctx context.Context, dist io.Writer, filename
 	if err != nil {
 		return
 	}
+	defer file.Close()
 
 	md := Metadata{}
 	if mimeType, exist := mime.Lookup(filepath.Ext(filename)); exist {
