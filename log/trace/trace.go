@@ -28,5 +28,8 @@ func StartSpanID(spanID string) string {
 	if spanID == "" {
 		return defaultSpanID
 	}
-	return fmt.Sprintf("%s.%d", spanID, 1)
+	spanIDLen := len(spanID)
+	lastID, _ := strconv.Atoi(spanID[spanIDLen-1:])
+	lastID++
+	return fmt.Sprintf("%s.%d", spanID, lastID)
 }
