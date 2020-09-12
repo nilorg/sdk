@@ -40,3 +40,18 @@ func FromUserIDContext(ctx context.Context) (userID string, ok bool) {
 	userID, ok = ctx.Value(userIDKey{}).(string)
 	return
 }
+
+// CopyContext copy context
+func CopyContext(ctx context.Context) context.Context {
+	parent := context.Background()
+	if traceID, ok := FromTraceIDContext(ctx); ok {
+		parent = NewTraceIDContext(ctx, traceID)
+	}
+	if spanID, ok := FromSpanIDContext(ctx); ok {
+		parent = NewSpanIDContext(ctx, spanID)
+	}
+	if userID, ok := FromUserIDContext(ctx); ok {
+		parent = NewUserIDContext(ctx, userID)
+	}
+	return parent
+}
