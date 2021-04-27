@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"path"
 
 	"github.com/nilorg/sdk/mime"
 )
@@ -50,7 +51,7 @@ func DownloadHandle(ctx context.Context, resp http.ResponseWriter, ds DownloadSt
 					wr = true
 				}
 			}
-			if mimeType, exist := mime.Lookup(info.Filename()); !wr && exist {
+			if mimeType, exist := mime.Lookup(path.Ext(info.Filename())); !wr && exist {
 				resp.Header().Set("Content-Type", mimeType)
 			}
 			dispositionType := ds.DispositionType()
