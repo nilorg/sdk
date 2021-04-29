@@ -1,6 +1,12 @@
 package mime
 
-import "strings"
+import (
+	"io"
+	"mime"
+	"net/http"
+	"path/filepath"
+	"strings"
+)
 
 var (
 	// ExtensionMIMEType ...
@@ -400,5 +406,24 @@ func Lookup(extension string) (mimeType string, exist bool) {
 		return
 	}
 	mimeType, exist = ExtensionMIMEType[extension]
+	return
+}
+
+// The algorithm uses at most sniffLen bytes to make its decision.
+const sniffLen = 512
+
+// 检测内容类型
+func DetectContentType(name string, content ...io.ReadSeeker) (contentType string, err error) {
+	contentType = mime.TypeByExtension(filepath.Ext(name))
+	if contentType == "" && len(content) > 0 {
+		// read a chunk to decide between utf-8 text and binary
+		var buf [sniffLen]byte
+		n, _ := io.ReadFull(content[0], buf[:])
+		contentType = http.DetectContentType(buf[:n])
+		_, err = content[0].Seek(0, io.SeekStart) // rewind to output whole file
+		if err != nil {
+			contentType = ""
+		}
+	}
 	return
 }
