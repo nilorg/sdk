@@ -48,8 +48,8 @@ func (ds *DefaultStorage) Upload(ctx context.Context, read io.Reader, filename s
 	if rename, ok := FromRenameContext(ctx); ok {
 		filename = rename(filename)
 	}
-	fullName = filepath.Join(ds.BasePath, filename)
-	dir := filepath.Dir(fullName)
+	saveFileName := filepath.Join(ds.BasePath, filename)
+	dir := filepath.Dir(saveFileName)
 	_, dirErr := os.Stat(dir)
 	if dirErr != nil {
 		if os.IsNotExist(dirErr) {
@@ -63,12 +63,16 @@ func (ds *DefaultStorage) Upload(ctx context.Context, read io.Reader, filename s
 		}
 	}
 	var dist *os.File
-	dist, err = os.Create(fullName)
+	dist, err = os.Create(saveFileName)
 	if err != nil {
 		return
 	}
 	defer dist.Close()
 	_, err = io.Copy(dist, read)
+	if err != nil {
+		return
+	}
+	fullName = filename
 	return
 }
 
