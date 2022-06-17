@@ -1,25 +1,9 @@
 package pool
 
 import (
-	"errors"
 	"io"
 	"sync"
 )
-
-var (
-	ErrInvalidConfig = errors.New("invalid pool config")
-	ErrPoolClosed    = errors.New("pool closed")
-)
-
-type factory func() (io.Closer, error)
-
-// Pooler 连接池接口
-type Pooler interface {
-	Get() (io.Closer, error) // 获取资源
-	Put(io.Closer) error     // 释放资源
-	Close(io.Closer) error   // 关闭资源
-	Shutdown() error         // 关闭池
-}
 
 // CommonPool 通用连接池
 type CommonPool struct {
@@ -62,10 +46,7 @@ func (p *CommonPool) Get() (io.Closer, error) {
 	}
 	for {
 		closer, err := p.getOrCreate()
-		if err != nil {
-			return nil, err
-		}
-		return closer, nil
+		return closer, err
 	}
 }
 
@@ -105,9 +86,9 @@ func (p *CommonPool) Put(closer io.Closer) error {
 func (p *CommonPool) Close(closer io.Closer) error {
 	p.Lock()
 	defer p.Unlock()
-	closer.Close()
+	err := closer.Close()
 	p.numOpen--
-	return nil
+	return err
 }
 
 // Shutdown 关闭连接池，释放所有资源
@@ -119,7 +100,10 @@ func (p *CommonPool) Shutdown() error {
 	defer p.Unlock()
 	close(p.pool)
 	for closer := range p.pool {
-		closer.Close()
+		err := closer.Close()
+		if err != nil {
+			return err
+		}
 		p.numOpen--
 	}
 	p.closed = true
