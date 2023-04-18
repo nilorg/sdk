@@ -6,8 +6,8 @@ import (
 
 // TodayStartEndTime 今天开始时间和结束时间
 func TodayStartEndTime() (stime.Time, stime.Time) {
-	today := stime.Now().Format(DateLayout)
-	start, _ := stime.Parse(DefaultLayout, today+" 00:00:00")
-	end, _ := stime.Parse(DefaultLayout, today+" 23:59:59")
+	snow := stime.Now()
+	start := stime.Date(snow.Year(), snow.Month(), snow.Day(), 0, 0, 0, 0, snow.Location())
+	end := stime.Date(snow.Year(), snow.Month(), snow.Day(), 23, 59, 59, 0, snow.Location())
 	return start, end
 }
