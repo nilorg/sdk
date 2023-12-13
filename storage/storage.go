@@ -24,12 +24,19 @@ type Remover interface {
 	Remove(ctx context.Context, filename string) (err error)
 }
 
+type Exister interface {
+	Exist(ctx context.Context, filename string) (exist bool, err error)
+}
+
 // Storager 存储
 type Storager interface {
 	Uploader
 	Downloader
 	Remover
+	Exister
 }
+
+var _ Storager = (*DefaultStorage)(nil)
 
 // DefaultStorage 默认存储
 type DefaultStorage struct {
@@ -120,6 +127,20 @@ func (ds *DefaultStorage) Download(ctx context.Context, dist io.Writer, filename
 func (ds *DefaultStorage) Remove(_ context.Context, filename string) (err error) {
 	fullName := filepath.Join(ds.BasePath, filename)
 	err = os.Remove(fullName)
+	return
+}
+
+// Exist 是否存在
+func (ds *DefaultStorage) Exist(_ context.Context, filename string) (exist bool, err error) {
+	fullName := filepath.Join(ds.BasePath, filename)
+	_, err = os.Stat(fullName)
+	if err != nil {
+		if os.IsNotExist(err) {
+			err = nil
+		}
+		return
+	}
+	exist = true
 	return
 }
 
