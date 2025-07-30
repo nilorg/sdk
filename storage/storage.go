@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -108,15 +109,56 @@ func (ds *DefaultStorage) Download(ctx context.Context, dist io.Writer, filename
 	if err != nil {
 		return
 	}
+
+	fileSize := fileInfo.Size()
+	actualSize := fileSize
+
+	// 检查是否有范围请求
+	if rangeReq, rangeOk := FromRangeRequestContext(ctx); rangeOk {
+		// 处理范围请求
+		if rangeReq.Start >= fileSize {
+			// 起始位置超出文件大小，返回错误
+			err = fmt.Errorf("range start position %d exceeds file size %d", rangeReq.Start, fileSize)
+			return
+		}
+
+		// 设置文件读取位置到起始字节
+		_, err = file.Seek(rangeReq.Start, io.SeekStart)
+		if err != nil {
+			return
+		}
+
+		// 计算实际要读取的大小
+		if rangeReq.IsToEnd() {
+			// 读取到文件末尾
+			actualSize = fileSize - rangeReq.Start
+		} else {
+			// 读取指定范围
+			if rangeReq.End >= fileSize {
+				// 结束位置超出文件大小，调整到文件末尾
+				actualSize = fileSize - rangeReq.Start
+			} else {
+				actualSize = rangeReq.End - rangeReq.Start + 1
+			}
+		}
+
+		// 使用LimitReader限制读取的字节数
+		limitedReader := io.LimitReader(file, actualSize)
+		_, err = io.Copy(dist, limitedReader)
+	} else {
+		// 没有范围请求，读取整个文件
+		_, err = io.Copy(dist, file)
+	}
+
 	info = &downloadFileInfo{
-		size:     fileInfo.Size(),
+		size:     actualSize, // 返回实际传输的大小
 		metadata: md,
 		filename: downloadFilename,
 	}
 	if downloadBefore, downloadBeforeExist := FromDownloadBeforeContext(ctx); downloadBeforeExist {
 		downloadBefore(info)
 	}
-	_, err = io.Copy(dist, file)
+
 	if err != nil {
 		info = nil
 	}
