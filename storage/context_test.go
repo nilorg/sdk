@@ -27,7 +27,7 @@ func TestFromRangeRequestContext(t *testing.T) {
 		{
 			name:     "valid range to end",
 			start:    100,
-			end:      0,
+			end:      -1,
 			expectOk: true,
 		},
 		{
@@ -37,11 +37,11 @@ func TestFromRangeRequestContext(t *testing.T) {
 			expectOk: true,
 		},
 		{
-			name:      "invalid range - negative start",
+			name:      "valid suffix range - negative start",
 			start:     -1,
-			end:       100,
-			expectOk:  false,
-			expectNil: true,
+			end:       100, // end is ignored for suffix range
+			expectOk:  true,
+			expectNil: false,
 		},
 		{
 			name:      "invalid range - end less than start",
@@ -132,7 +132,7 @@ func TestRangeRequest_Methods(t *testing.T) {
 		{
 			name:         "valid range to end",
 			start:        100,
-			end:          0,
+			end:          -1,
 			expectValid:  true,
 			expectToEnd:  true,
 			expectLength: -1,
@@ -146,12 +146,12 @@ func TestRangeRequest_Methods(t *testing.T) {
 			expectLength: -1,
 		},
 		{
-			name:         "invalid negative start",
+			name:         "valid suffix range (negative start)",
 			start:        -1,
 			end:          100,
-			expectValid:  false,
-			expectToEnd:  false,
-			expectLength: 102,
+			expectValid:  true,
+			expectToEnd:  true,
+			expectLength: 1,
 		},
 		{
 			name:         "invalid end less than start",
@@ -238,7 +238,7 @@ func TestDownloadWithRangeRequest(t *testing.T) {
 		{
 			name:            "range request to end",
 			start:           30,
-			end:             0, // 0 表示到文件末尾
+			end:             -1, // -1 表示到文件末尾
 			shouldHaveRange: true,
 			expectedData:    "uvwxyz",
 			expectedSize:    6,
@@ -302,7 +302,7 @@ func TestParseRangeHeader(t *testing.T) {
 			name:        "bytes range to end",
 			rangeHeader: "bytes=1024-",
 			expectStart: 1024,
-			expectEnd:   0,
+			expectEnd:   -1,
 			expectError: false,
 		},
 		{

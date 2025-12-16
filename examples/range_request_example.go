@@ -87,7 +87,7 @@ func demonstrateRangeContext() {
 	}
 
 	// 示例2：创建到文件末尾的范围请求
-	rangeToEndCtx := storage.NewRangeRequestContext(ctx, 100, 0) // 从第101个字节读取到末尾
+	rangeToEndCtx := storage.NewRangeRequestContext(ctx, 100, -1) // 从第101个字节读取到末尾
 
 	rangeReq2, ok := storage.FromRangeRequestContext(rangeToEndCtx)
 	if ok {

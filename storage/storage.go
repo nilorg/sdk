@@ -78,6 +78,7 @@ func (ds *DefaultStorage) Upload(ctx context.Context, read io.Reader, filename s
 	defer dist.Close()
 	_, err = io.Copy(dist, read)
 	if err != nil {
+		os.Remove(saveFileName)
 		return
 	}
 	fullName = filename
@@ -116,30 +117,43 @@ func (ds *DefaultStorage) Download(ctx context.Context, dist io.Writer, filename
 	// 检查是否有范围请求
 	if rangeReq, rangeOk := FromRangeRequestContext(ctx); rangeOk {
 		// 处理范围请求
-		if rangeReq.Start >= fileSize {
-			// 起始位置超出文件大小，返回错误
-			err = fmt.Errorf("range start position %d exceeds file size %d", rangeReq.Start, fileSize)
-			return
+		var startPos int64
+		if rangeReq.Start < 0 {
+			// Suffix Range: 读取最后 N 个字节
+			suffixLen := -rangeReq.Start
+			if suffixLen > fileSize {
+				suffixLen = fileSize
+			}
+			startPos = fileSize - suffixLen
+			actualSize = suffixLen
+		} else {
+			// Normal Range
+			if (fileSize > 0 && rangeReq.Start >= fileSize) || (fileSize == 0 && rangeReq.Start > 0) {
+				// 起始位置超出文件大小，返回错误
+				err = fmt.Errorf("range start position %d exceeds file size %d", rangeReq.Start, fileSize)
+				return
+			}
+			startPos = rangeReq.Start
+
+			// 计算实际要读取的大小
+			if rangeReq.IsToEnd() {
+				// 读取到文件末尾
+				actualSize = fileSize - startPos
+			} else {
+				// 读取指定范围
+				if rangeReq.End >= fileSize {
+					// 结束位置超出文件大小，调整到文件末尾
+					actualSize = fileSize - startPos
+				} else {
+					actualSize = rangeReq.End - startPos + 1
+				}
+			}
 		}
 
 		// 设置文件读取位置到起始字节
-		_, err = file.Seek(rangeReq.Start, io.SeekStart)
+		_, err = file.Seek(startPos, io.SeekStart)
 		if err != nil {
 			return
-		}
-
-		// 计算实际要读取的大小
-		if rangeReq.IsToEnd() {
-			// 读取到文件末尾
-			actualSize = fileSize - rangeReq.Start
-		} else {
-			// 读取指定范围
-			if rangeReq.End >= fileSize {
-				// 结束位置超出文件大小，调整到文件末尾
-				actualSize = fileSize - rangeReq.Start
-			} else {
-				actualSize = rangeReq.End - rangeReq.Start + 1
-			}
 		}
 
 		// 使用LimitReader限制读取的字节数

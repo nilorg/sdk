@@ -174,6 +174,22 @@ func parseRangeHeader(rangeHeader string) (start, end int64, err error) {
 			err = fmt.Errorf("invalid range start: %s", parts[0])
 			return
 		}
+	} else {
+		// 如果起始位置为空，必须有结束位置，表示 suffix-byte-range-spec
+		// bytes=-500 -> start=-500 (internal representation)
+		if parts[1] == "" {
+			err = fmt.Errorf("invalid range format: %s", rangeSpec)
+			return
+		}
+		var suffixLen int64
+		suffixLen, err = strconv.ParseInt(parts[1], 10, 64)
+		if err != nil {
+			err = fmt.Errorf("invalid range suffix length: %s", parts[1])
+			return
+		}
+		start = -suffixLen
+		end = -1 // Suffix range implies to end
+		return
 	}
 
 	// 解析结束位置
@@ -185,7 +201,7 @@ func parseRangeHeader(rangeHeader string) (start, end int64, err error) {
 		}
 	} else {
 		// 没有指定结束位置，表示到文件末尾
-		end = 0
+		end = -1
 	}
 
 	return
